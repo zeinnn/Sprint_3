@@ -20,13 +20,14 @@ public class CourierCreationTest {
     @DisplayName("Создание курьера с валидными данными")
     public void courierCanBeCreatedWithValidData(){
         Courier courier =  Courier.getRandom();
-        boolean created = courierClient.create(courier);
+        ValidatableResponse created = courierClient.create(courier);
 
         CourierCredentials creds = CourierCredentials.from(courier);
         ValidatableResponse loginResponse =  courierClient.login(creds);
         courierId = loginResponse.extract().path("id");
 
-        assertTrue("Courier is not created", created);
+        assertNotNull(created.extract().body());
+        assertEquals(201,created.extract().statusCode());
         courierClient.delete(courierId);
 
     }
@@ -38,8 +39,9 @@ public class CourierCreationTest {
         CourierCredentials creds = CourierCredentials.from(courier);
         ValidatableResponse loginResponse =  courierClient.login(creds);
         courierId = loginResponse.extract().path("id");
-        String message = courierClient.tryCreateSameCourier(courier);
-        assertEquals("Этот логин уже используется",message);
+        ValidatableResponse tryCreateSameCourierResponse =  courierClient.tryCreateSameCourier(courier);
+        assertEquals("Этот логин уже используется",tryCreateSameCourierResponse.extract().path("message"));
+        assertEquals(409,tryCreateSameCourierResponse.extract().statusCode());
         courierClient.delete(courierId);
     }
     @Test
@@ -47,9 +49,10 @@ public class CourierCreationTest {
     public void tryCreateCourierWithEmptyPassword(){
         Courier courier = Courier.getRandom();
         CourierCredentials courierWithoutPassword = new CourierCredentials(courier.getLogin(),null,courier.getFirstName());
-        String message = courierClient.tryCreateCourierWithoutNecessaryParameter(courierWithoutPassword);
+        ValidatableResponse message = courierClient.tryCreateCourierWithoutNecessaryParameter(courierWithoutPassword);
 
-        assertEquals(errorMessage, message);
+        assertEquals(errorMessage, message.extract().path("message"));
+        assertEquals(400,message.extract().statusCode());
 
     }
     @Test
@@ -57,8 +60,10 @@ public class CourierCreationTest {
     public void tryCreateCourierWithEmptyLogin(){
         Courier courier =  Courier.getRandom();
         CourierCredentials courierWithoutLogin = new CourierCredentials(null,courier.getPassword(),courier.getFirstName());
-        String message = courierClient.tryCreateCourierWithoutNecessaryParameter(courierWithoutLogin);
-        assertEquals(errorMessage, message);
+        ValidatableResponse message = courierClient.tryCreateCourierWithoutNecessaryParameter(courierWithoutLogin);
+
+        assertEquals(errorMessage, message.extract().path("message"));
+        assertEquals(400,message.extract().statusCode());
 
     }
     @Test
@@ -66,8 +71,10 @@ public class CourierCreationTest {
     public void tryCreateCourierWithEmptyFirstName(){
         Courier courier =  Courier.getRandom();
         CourierCredentials courierWithoutName = new CourierCredentials(courier.getLogin(),courier.getPassword(),null);
-        String message = courierClient.tryCreateCourierWithoutNecessaryParameter(courierWithoutName);
-        assertEquals(errorMessage, message);
+        ValidatableResponse message = courierClient.tryCreateCourierWithoutNecessaryParameter(courierWithoutName);
+
+        assertEquals(errorMessage, message.extract().path("message"));
+        assertEquals(400,message.extract().statusCode());
 
     }
 }

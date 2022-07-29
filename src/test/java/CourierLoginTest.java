@@ -33,10 +33,10 @@ public class CourierLoginTest {
         courierClient.create(courier);
         CourierCredentials creds = CourierCredentials.from(courier);
         ValidatableResponse loginResponse = courierClient.login(creds);
-        courierId = loginResponse.extract().path("id");
 
-        assertNotNull("Courier ID is incorrect ",courierId);
-        courierClient.delete(courierId);
+        assertNotNull("Courier ID is incorrect ",loginResponse.extract().path("id"));
+        Assert.assertEquals(200,loginResponse.extract().statusCode());
+        courierClient.delete(courierId);            //Удаление не во всех тестах происходит, если занести в AFTER то тот тест, где удаление не требуется будет падать
 
 
     }
@@ -50,10 +50,8 @@ public class CourierLoginTest {
 
         CourierCredentials creds = new CourierCredentials("wrongLogin",courier.getPassword());
         ValidatableResponse loginResponse = courierClient.login(creds);
-        int statusCode = loginResponse.extract().statusCode();
-        assertThat("Код ответа другой", statusCode, equalTo(404));
-        String message = loginResponse.extract().path("message");
-        assertEquals(message, "Учетная запись не найдена");
+        assertThat("Код ответа другой", loginResponse.extract().statusCode(), equalTo(404));
+        assertEquals(loginResponse.extract().path("message"), "Учетная запись не найдена");
 
         //удалить курьера
         CourierCredentials trueCreds = CourierCredentials.from(courier);
@@ -68,10 +66,8 @@ public class CourierLoginTest {
         Courier courier =  Courier.getRandom();
         courierClient.create(courier);
         ValidatableResponse loginResponse = courierClient.login(new CourierCredentials(courier.getLogin(),"wrongPassword"));
-        int statusCode = loginResponse.extract().statusCode();
-        String message = loginResponse.extract().path("message");
-        assertThat("Код ответа другой", statusCode, equalTo(404));
-        assertEquals(message, "Учетная запись не найдена");
+        assertThat("Код ответа другой", loginResponse.extract().statusCode(), equalTo(404));
+        assertEquals(loginResponse.extract().path("message"), "Учетная запись не найдена");
         //удалить курьера
         CourierCredentials trueCreds = CourierCredentials.from(courier);
         ValidatableResponse trueLoginResponse =  courierClient.login(trueCreds);
@@ -80,18 +76,15 @@ public class CourierLoginTest {
 
     }
 
-    @Test(timeout = 1000)
+    @Test
     @DisplayName("Курьер не может залогиниться без пароля")
     public void courierCantLoginWithNullPassword() {
         Courier courier = Courier.getRandom();
         courierClient.create(courier);
         ValidatableResponse loginResponse = courierClient.login(new CourierCredentials(courier.getLogin(),null));
-        int statusCode =  loginResponse.extract().statusCode();
-        assertThat("Код ответа другой", statusCode, equalTo(400));
-        String message = loginResponse.extract().path("message");
-        int codeMessage = loginResponse.extract().path("code");
-        Assert.assertNull(codeMessage);
-        assertEquals(message, "Недостаточно данных для входа");
+        assertThat("Код ответа другой", loginResponse.extract().statusCode(), equalTo(400));
+        Assert.assertNull(loginResponse.extract().path("code"));
+        assertEquals("Недостаточно данных для входа", loginResponse.extract().path("message"));
         //удалить курьера
         CourierCredentials trueCreds = CourierCredentials.from(courier);
         ValidatableResponse trueLoginResponse =  courierClient.login(trueCreds);
@@ -105,12 +98,9 @@ public class CourierLoginTest {
         Courier courier = Courier.getRandom();
         courierClient.create(courier);
         ValidatableResponse loginResponse = courierClient.login(new CourierCredentials(null,courier.getPassword()));
-        int statusCode =  loginResponse.extract().statusCode();
-        assertThat("Код ответа другой", statusCode, equalTo(400));
-        String message = loginResponse.extract().path("message");
-        int codeMessage = loginResponse.extract().path("code");
-        Assert.assertNull(codeMessage);
-        assertEquals(message, "Недостаточно данных для входа");
+        assertThat("Код ответа другой", loginResponse.extract().statusCode(), equalTo(400));
+        Assert.assertNull(loginResponse.extract().path("code"));
+        assertEquals("Недостаточно данных для входа", loginResponse.extract().path("message"));
         //удалить курьера
         CourierCredentials creds = CourierCredentials.from(courier);
         ValidatableResponse trueLoginResponse =  courierClient.login(creds);
@@ -123,10 +113,8 @@ public class CourierLoginTest {
     public void cantLoginNonExistingCourier(){
         Courier courier = Courier.getRandom();
         ValidatableResponse loginResponse = courierClient.login(new CourierCredentials(courier.getLogin(),courier.getPassword()));
-        int statusCode =  loginResponse.extract().statusCode();
-        assertThat("Код ответа другой", statusCode, equalTo(404));
-        String message = loginResponse.extract().path("message");
-        assertEquals(message, "Учетная запись не найдена");
+        assertThat("Код ответа другой", loginResponse.extract().statusCode(), equalTo(404));
+        assertEquals("Учетная запись не найдена", loginResponse.extract().path("message"));
     }
 }
 

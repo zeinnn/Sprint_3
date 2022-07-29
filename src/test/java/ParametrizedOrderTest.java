@@ -18,23 +18,22 @@ public class ParametrizedOrderTest {
     private ValidatableResponse created;
     private OrderClient orderClient;
     private  List<String> color;
-    private int expectedCode;
 
     int track;
 
-    public ParametrizedOrderTest(List<String> color, int expectedCode) {
+    public ParametrizedOrderTest(List<String> color) {
         this.color = color;
-        this.expectedCode = expectedCode;
+
     }
 
 
     @Parameterized.Parameters
     public static Object[][] createOrderWithColor() {
         return new Object[][]{
-                {List.of("BLACK"), 201},
-                {List.of("GREY"), 201},
-                {List.of("BLACK", "GREY"), 201},
-                {null, 201},
+                {List.of("BLACK")},
+                {List.of("GREY")},
+                {List.of("BLACK", "GREY")},
+                {null},
         };
 
 
@@ -52,10 +51,9 @@ public class ParametrizedOrderTest {
         defaultOrder.setColor(color);
         created = orderClient.createOrder(defaultOrder);
         track = created.extract().path("track");
-        Assert.assertEquals(201,expectedCode);
-
 
         assertNotEquals(0,track);
+        Assert.assertEquals(201,created.extract().statusCode());
 
         orderClient.cancel(track);
 

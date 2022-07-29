@@ -29,16 +29,9 @@ public class OrderClient extends RestAssuredClient {
     }
 
 
-    public boolean cancel(int track) {
-        return    given()
-                 .contentType(ContentType.JSON)
-                .baseUri("http://qa-scooter.praktikum-services.ru/")
-                .put("/api/v1/orders/cancel" + "?track="+ track)
-                .then().log().all()
-                .assertThat()
-                .statusCode(200)
-                .extract()
-                .path("ok");
+    public ValidatableResponse cancel(int track) {
+        return  reqSpec .put("/api/v1/orders/cancel" + "?track="+ track)
+                .then().log().all();
     }
 
     @Step("Получить заказ по трек номеру")
@@ -61,9 +54,7 @@ public class OrderClient extends RestAssuredClient {
                 .get(ROOT + "?courierId=" + courierId)
                 .then().log().all()
                 .assertThat()
-                .statusCode(200)
-                .and()
-                .body("orders",notNullValue());
+                .and();
     }
 
     @Step("Завершить заказ")
@@ -74,17 +65,3 @@ public class OrderClient extends RestAssuredClient {
     }
 
 }
-
-//    public int cancel(int id) {
-//        return given()
-//                .contentType(ContentType.JSON)
-//                .baseUri("http://qa-scooter.praktikum-services.ru/")
-//                .body(json)
-//                .when()
-//                .put("/api/v1/orders/cancel")
-//                .then().log().all()
-//                .assertThat()
-//                .statusCode(200)
-//                .extract()
-//                .path("ok");
-//    }
